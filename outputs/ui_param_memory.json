@@ -1,0 +1,21 @@
+{
+  "slot1": {
+    "excel_file": "shuizhi.xlsx",
+    "test_size": 0.2,
+    "scenario": "custom",
+    "hidden_size": 8,
+    "learning_rate": 0.05,
+    "max_epochs": 5000,
+    "target_mse": 1e-05,
+    "train_algo": "gd",
+    "use_pso_init": true,
+    "pso_particles": 20,
+    "pso_iters": 60,
+    "pso_w_max": 0.9,
+    "pso_w_min": 0.4,
+    "pso_c1": 1.49445,
+    "pso_c2": 1.49445
+  },
+  "slot2": null,
+  "slot3": null
+}

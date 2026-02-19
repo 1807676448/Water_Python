@@ -1,0 +1,141 @@
+--- 训练参数说明 ---
+scenario=custom：训练场景，决定默认输入输出列与部分网络设置
+hidden_size=8：隐藏层规模，偏小易欠拟合，偏大易过拟合
+learning_rate=0.05：学习率，影响收敛速度与稳定性
+max_epochs=10000：最大训练轮数，决定训练上限
+target_mse=1e-05：早停目标误差，达到后提前停止
+train_algo=gd：优化算法（gd 或 trainlm_like）
+use_pso_init=True：是否先用 PSO 搜索更优初始权重
+结果建议：综合关注 MSE/RMSE/R2/MAPE；误差类越小越好，R2 越接近 1 越好。
+
+日志系统已启动，输出将保存到 outputs/training_log.txt
+读取数据中...
+检测到列名: ['254', '550', 'tem', 'cod', 'uv254']
+输入列: ['254', '550', 'tem']
+输出列: ['cod', 'uv254']
+隐含层神经元: 8
+开始 PSO 初始化...
+[PSO] 初始全局最优 MSE: 0.54412639
+[PSO] Iter 010/60, gbest MSE: 0.34023464
+[PSO] Iter 020/60, gbest MSE: 0.21946108
+[PSO] Iter 030/60, gbest MSE: 0.21946108
+[PSO] Iter 040/60, gbest MSE: 0.17916951
+[PSO] Iter 050/60, gbest MSE: 0.16314755
+[PSO] Iter 060/60, gbest MSE: 0.12138341
+[PSO] 完成，使用最优参数初始化 BP 网络，MSE: 0.12138341
+开始 BP 训练...
+Epoch 0100/10000, Train MSE: 0.08008058
+Epoch 0200/10000, Train MSE: 0.06127992
+Epoch 0300/10000, Train MSE: 0.05096895
+Epoch 0400/10000, Train MSE: 0.04442262
+Epoch 0500/10000, Train MSE: 0.03973683
+Epoch 0600/10000, Train MSE: 0.03618664
+Epoch 0700/10000, Train MSE: 0.03340981
+Epoch 0800/10000, Train MSE: 0.03117889
+Epoch 0900/10000, Train MSE: 0.02933908
+Epoch 1000/10000, Train MSE: 0.02778443
+Epoch 1100/10000, Train MSE: 0.02644286
+Epoch 1200/10000, Train MSE: 0.02526512
+Epoch 1300/10000, Train MSE: 0.02421685
+Epoch 1400/10000, Train MSE: 0.02327328
+Epoch 1500/10000, Train MSE: 0.02241595
+Epoch 1600/10000, Train MSE: 0.02163062
+Epoch 1700/10000, Train MSE: 0.02090596
+Epoch 1800/10000, Train MSE: 0.02023283
+Epoch 1900/10000, Train MSE: 0.01960369
+Epoch 2000/10000, Train MSE: 0.01901231
+Epoch 2100/10000, Train MSE: 0.01845349
+Epoch 2200/10000, Train MSE: 0.01792285
+Epoch 2300/10000, Train MSE: 0.01741677
+Epoch 2400/10000, Train MSE: 0.01693220
+Epoch 2500/10000, Train MSE: 0.01646664
+Epoch 2600/10000, Train MSE: 0.01601802
+Epoch 2700/10000, Train MSE: 0.01558462
+Epoch 2800/10000, Train MSE: 0.01516510
+Epoch 2900/10000, Train MSE: 0.01475833
+Epoch 3000/10000, Train MSE: 0.01436347
+Epoch 3100/10000, Train MSE: 0.01397985
+Epoch 3200/10000, Train MSE: 0.01360697
+Epoch 3300/10000, Train MSE: 0.01324445
+Epoch 3400/10000, Train MSE: 0.01289203
+Epoch 3500/10000, Train MSE: 0.01254953
+Epoch 3600/10000, Train MSE: 0.01221684
+Epoch 3700/10000, Train MSE: 0.01189387
+Epoch 3800/10000, Train MSE: 0.01158059
+Epoch 3900/10000, Train MSE: 0.01127697
+Epoch 4000/10000, Train MSE: 0.01098300
+Epoch 4100/10000, Train MSE: 0.01069867
+Epoch 4200/10000, Train MSE: 0.01042395
+Epoch 4300/10000, Train MSE: 0.01015882
+Epoch 4400/10000, Train MSE: 0.00990321
+Epoch 4500/10000, Train MSE: 0.00965707
+Epoch 4600/10000, Train MSE: 0.00942031
+Epoch 4700/10000, Train MSE: 0.00919283
+Epoch 4800/10000, Train MSE: 0.00897450
+Epoch 4900/10000, Train MSE: 0.00876518
+Epoch 5000/10000, Train MSE: 0.00856472
+Epoch 5100/10000, Train MSE: 0.00837293
+Epoch 5200/10000, Train MSE: 0.00818965
+Epoch 5300/10000, Train MSE: 0.00801466
+Epoch 5400/10000, Train MSE: 0.00784776
+Epoch 5500/10000, Train MSE: 0.00768872
+Epoch 5600/10000, Train MSE: 0.00753734
+Epoch 5700/10000, Train MSE: 0.00739337
+Epoch 5800/10000, Train MSE: 0.00725658
+Epoch 5900/10000, Train MSE: 0.00712674
+Epoch 6000/10000, Train MSE: 0.00700360
+Epoch 6100/10000, Train MSE: 0.00688690
+Epoch 6200/10000, Train MSE: 0.00677641
+Epoch 6300/10000, Train MSE: 0.00667187
+Epoch 6400/10000, Train MSE: 0.00657305
+Epoch 6500/10000, Train MSE: 0.00647969
+Epoch 6600/10000, Train MSE: 0.00639155
+Epoch 6700/10000, Train MSE: 0.00630838
+Epoch 6800/10000, Train MSE: 0.00622995
+Epoch 6900/10000, Train MSE: 0.00615602
+Epoch 7000/10000, Train MSE: 0.00608636
+Epoch 7100/10000, Train MSE: 0.00602075
+Epoch 7200/10000, Train MSE: 0.00595896
+Epoch 7300/10000, Train MSE: 0.00590080
+Epoch 7400/10000, Train MSE: 0.00584604
+Epoch 7500/10000, Train MSE: 0.00579451
+Epoch 7600/10000, Train MSE: 0.00574599
+Epoch 7700/10000, Train MSE: 0.00570032
+Epoch 7800/10000, Train MSE: 0.00565732
+Epoch 7900/10000, Train MSE: 0.00561681
+Epoch 8000/10000, Train MSE: 0.00557865
+Epoch 8100/10000, Train MSE: 0.00554269
+Epoch 8200/10000, Train MSE: 0.00550876
+Epoch 8300/10000, Train MSE: 0.00547674
+Epoch 8400/10000, Train MSE: 0.00544651
+Epoch 8500/10000, Train MSE: 0.00541793
+Epoch 8600/10000, Train MSE: 0.00539090
+Epoch 8700/10000, Train MSE: 0.00536530
+Epoch 8800/10000, Train MSE: 0.00534103
+Epoch 8900/10000, Train MSE: 0.00531800
+Epoch 9000/10000, Train MSE: 0.00529613
+Epoch 9100/10000, Train MSE: 0.00527531
+Epoch 9200/10000, Train MSE: 0.00525549
+Epoch 9300/10000, Train MSE: 0.00523657
+Epoch 9400/10000, Train MSE: 0.00521851
+Epoch 9500/10000, Train MSE: 0.00520123
+Epoch 9600/10000, Train MSE: 0.00518467
+Epoch 9700/10000, Train MSE: 0.00516879
+Epoch 9800/10000, Train MSE: 0.00515351
+Epoch 9900/10000, Train MSE: 0.00513882
+Epoch 10000/10000, Train MSE: 0.00512465
+
+========== 模型总体评估 ==========
+Train -> R2: 0.988528, RMSE: 0.049851, MAPE: 1.7429%, MSE: 0.00248508
+Test  -> R2: 0.945786, RMSE: 0.109921, MAPE: 3.9916%, MSE: 0.01208271
+
+========== 分输出评估(Test) ==========
+cod -> R2: 0.948688, RMSE: 0.155391, MAPE: 3.8615%, MSE: 0.02414645
+uv254 -> R2: 0.942884, RMSE: 0.004354, MAPE: 4.1217%, MSE: 0.00001896
+
+保存完成:
+- D:\STM32\Water_2\Water_Python\outputs\water_quality_model.pth
+- D:\STM32\Water_2\Water_Python\outputs\scaler_x.pkl / D:\STM32\Water_2\Water_Python\outputs\scaler_y.pkl
+- D:\STM32\Water_2\Water_Python\outputs\model_config.json
+- D:\STM32\Water_2\Water_Python\outputs\training_log.txt
+训练结束。
