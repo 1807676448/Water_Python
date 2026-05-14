@@ -36,16 +36,22 @@ DEFAULT_TEST_SIZE = 0.2
 DEFAULT_SCENARIO = 'custom'  # 'temperature_compensation' / 'turbidity_prediction' / 'custom'
 DEFAULT_INPUT_COLS = ('254', '550', 'tem')
 DEFAULT_TARGET_COLS = ('cod', 'uv254')
-DEFAULT_HIDDEN_SIZE = 8
-DEFAULT_LEARNING_RATE = 0.05
+DEFAULT_HIDDEN_SIZE = 3          # 最小可行隐层（3→3→2=20参数），降低过拟合
+DEFAULT_LEARNING_RATE = 0.01     # 适当降低学习率，配合Adam自适应
 DEFAULT_MAX_EPOCHS = 10000
-DEFAULT_TARGET_MSE = 1e-5
-DEFAULT_TRAIN_ALGO = 'gd'  # 'gd' or 'trainlm_like'
+DEFAULT_TARGET_MSE = 1e-4        # 更现实的目标误差
+DEFAULT_TRAIN_ALGO = 'adam'      # 'gd' / 'adam' / 'trainlm_like'
+
+# 正则化与早停参数
+DEFAULT_WEIGHT_DECAY = 5e-3      # L2 正则化系数，小数据集需更强正则化
+DEFAULT_LR_FACTOR = 0.5          # 学习率衰减因子
+DEFAULT_LR_PATIENCE = 300        # 验证损失不降多少轮后衰减学习率
+DEFAULT_EARLY_STOP_PATIENCE = 800 # 验证损失不降多少轮后提前停止
 
 # PSO 初始化参数（仅当 use_pso_init=True 生效）
 DEFAULT_USE_PSO_INIT = True
-DEFAULT_PSO_PARTICLES = 20
-DEFAULT_PSO_ITERS = 60
+DEFAULT_PSO_PARTICLES = 30       # 增加粒子数提升搜索质量
+DEFAULT_PSO_ITERS = 100          # 增加迭代次数
 DEFAULT_PSO_W_MAX = 0.9
 DEFAULT_PSO_W_MIN = 0.4
 DEFAULT_PSO_C1 = 1.49445
@@ -99,7 +105,7 @@ class TrainConfig:
     max_epochs: int = DEFAULT_MAX_EPOCHS
     target_mse: float = DEFAULT_TARGET_MSE
 
-    train_algo: str = DEFAULT_TRAIN_ALGO  # 'gd' or 'trainlm_like'
+    train_algo: str = DEFAULT_TRAIN_ALGO  # 'gd' / 'adam' / 'trainlm_like'
 
     use_pso_init: bool = DEFAULT_USE_PSO_INIT
     pso_particles: int = DEFAULT_PSO_PARTICLES
@@ -108,6 +114,12 @@ class TrainConfig:
     pso_w_min: float = DEFAULT_PSO_W_MIN
     pso_c1: float = DEFAULT_PSO_C1
     pso_c2: float = DEFAULT_PSO_C2
+
+    # 正则化与早停
+    weight_decay: float = DEFAULT_WEIGHT_DECAY
+    lr_factor: float = DEFAULT_LR_FACTOR
+    lr_patience: int = DEFAULT_LR_PATIENCE
+    early_stop_patience: int = DEFAULT_EARLY_STOP_PATIENCE
 
 
 class BPNet(nn.Module):
@@ -255,8 +267,10 @@ def main():
     print(f'learning_rate={cfg.learning_rate}：学习率，影响收敛速度与稳定性')
     print(f'max_epochs={cfg.max_epochs}：最大训练轮数，决定训练上限')
     print(f'target_mse={cfg.target_mse}：早停目标误差，达到后提前停止')
-    print(f'train_algo={cfg.train_algo}：优化算法（gd 或 trainlm_like）')
+    print(f'train_algo={cfg.train_algo}：优化算法（gd/adam/trainlm_like）')
     print(f'use_pso_init={cfg.use_pso_init}：是否先用 PSO 搜索更优初始权重')
+    print(f'weight_decay={cfg.weight_decay}：L2 正则化系数')
+    print(f'early_stop_patience={cfg.early_stop_patience}：验证损失不降多少轮后停止')
     print('结果建议：综合关注 MSE/RMSE/R2/MAPE；误差类越小越好，R2 越接近 1 越好。\n')
 
     # 1) 读取数据
@@ -270,13 +284,34 @@ def main():
     df = pd.read_excel(excel_path)
     df.columns = df.columns.astype(str).str.strip()
     print('检测到列名:', df.columns.tolist())
+    print(f'数据量: {len(df)} 条记录')
 
     input_cols, target_cols, hidden_size = resolve_columns(df, cfg)
     output_size = len(target_cols)
 
+    # 输出数据统计，帮助理解数据质量
+    print('\n--- 数据统计 ---')
+    for c in df.columns:
+        col = df[c]
+        print(f'{c}: mean={col.mean():.4f}, std={col.std():.4f}, '
+              f'CV={abs(col.std()/col.mean()):.4f}, range=[{col.min():.4f}, {col.max():.4f}]')
+    print('--- 相关系数(输入 vs 输出) ---')
+    corr = df.corr()
+    for ic in input_cols:
+        for tc in target_cols:
+            if ic in corr.index and tc in corr.columns:
+                print(f'  corr({ic}, {tc}) = {corr.loc[ic, tc]:.4f}')
+    print()
+
+    # 计算模型参数量，提示是否合理
+    n_params = len(input_cols) * hidden_size + hidden_size + hidden_size * output_size + output_size
+    n_train = int(len(df) * (1 - cfg.test_size))
     print(f'输入列: {input_cols}')
     print(f'输出列: {target_cols}')
     print(f'隐含层神经元: {hidden_size}')
+    print(f'模型总参数: {n_params}，训练样本: {n_train}，参数/样本比: {n_params/n_train:.2f}')
+    if n_params > n_train * 0.5:
+        print('⚠ 警告: 参数量相对样本数偏多，容易过拟合。建议减小 hidden_size 或增大 weight_decay。')
 
     # 2) 划分训练/测试并做 MinMax 归一化
     x_raw = df[input_cols].values.astype(np.float32)
@@ -297,6 +332,9 @@ def main():
     x_train_tensor = torch.tensor(x_train, dtype=torch.float32)
     y_train_tensor = torch.tensor(y_train, dtype=torch.float32)
     x_test_tensor = torch.tensor(x_test, dtype=torch.float32)
+    y_test_tensor = torch.tensor(y_test, dtype=torch.float32)
+
+    print(f'训练集: {len(x_train)} 条，测试集: {len(x_test)} 条')
 
     # 3) 构建模型
     model = BPNet(input_size=len(input_cols), hidden_size=hidden_size, output_size=output_size)
@@ -306,12 +344,14 @@ def main():
         print('开始 PSO 初始化...')
         pso_initialize(model, x_train, y_train, cfg)
 
-    # 5) BP 训练
+    # 5) BP 训练（带验证监控、早停、学习率调度）
     criterion = nn.MSELoss()
     print('开始 BP 训练...')
 
+    # 根据算法选择优化器
     if cfg.train_algo == 'trainlm_like':
-        optimizer = torch.optim.LBFGS(model.parameters(), lr=0.8, max_iter=20)
+        optimizer = torch.optim.LBFGS(model.parameters(), lr=0.8, max_iter=20,
+                                       history_size=10, line_search_fn='strong_wolfe')
 
         def closure():
             optimizer.zero_grad()
@@ -320,16 +360,58 @@ def main():
             loss.backward()
             return loss
 
+        best_test_loss = float('inf')
+        best_state = None
+        patience_counter = 0
+
         for epoch in range(cfg.max_epochs):
             loss = optimizer.step(closure)
-            current = float(loss.item())
-            if (epoch + 1) % 50 == 0:
-                print(f'Epoch {epoch + 1:04d}/{cfg.max_epochs}, Train MSE: {current:.8f}')
-            if current <= cfg.target_mse:
-                print(f'达到目标误差，提前停止。epoch={epoch + 1}, mse={current:.8f}')
+            train_loss = float(loss.item())
+
+            # 计算测试损失
+            model.eval()
+            with torch.no_grad():
+                test_pred_s = model(x_test_tensor)
+                test_loss = float(criterion(test_pred_s, y_test_tensor).item())
+            model.train()
+
+            if (epoch + 1) % 10 == 0:
+                print(f'Epoch {epoch + 1:04d}/{cfg.max_epochs}, '
+                      f'Train MSE: {train_loss:.8f}, Test MSE: {test_loss:.8f}')
+
+            # 早停检查
+            if test_loss < best_test_loss:
+                best_test_loss = test_loss
+                best_state = {k: v.clone() for k, v in model.state_dict().items()}
+                patience_counter = 0
+            else:
+                patience_counter += 1
+
+            if patience_counter >= cfg.early_stop_patience:
+                print(f'验证损失不再下降，提前停止。epoch={epoch + 1}, best_test_mse={best_test_loss:.8f}')
                 break
-    else:
-        optimizer = torch.optim.SGD(model.parameters(), lr=cfg.learning_rate)
+            if train_loss <= cfg.target_mse:
+                print(f'达到目标误差，提前停止。epoch={epoch + 1}, mse={train_loss:.8f}')
+                break
+
+        # 恢复最佳模型
+        if best_state is not None:
+            model.load_state_dict(best_state)
+            print(f'已恢复最佳验证损失模型 (Test MSE={best_test_loss:.8f})')
+
+    elif cfg.train_algo == 'adam':
+        # Adam 优化器 + L2 正则化
+        optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate,
+                                      weight_decay=cfg.weight_decay)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode='min', factor=cfg.lr_factor,
+            patience=cfg.lr_patience, min_lr=1e-6
+        )
+
+        best_test_loss = float('inf')
+        best_state = None
+        patience_counter = 0
+
         for epoch in range(cfg.max_epochs):
             model.train()
             pred = model(x_train_tensor)
@@ -339,12 +421,100 @@ def main():
             loss.backward()
             optimizer.step()
 
-            current = float(loss.item())
-            if (epoch + 1) % 100 == 0:
-                print(f'Epoch {epoch + 1:04d}/{cfg.max_epochs}, Train MSE: {current:.8f}')
-            if current <= cfg.target_mse:
-                print(f'达到目标误差，提前停止。epoch={epoch + 1}, mse={current:.8f}')
+            train_loss = float(loss.item())
+
+            # 计算测试损失
+            model.eval()
+            with torch.no_grad():
+                test_pred_s = model(x_test_tensor)
+                test_loss = float(criterion(test_pred_s, y_test_tensor).item())
+            model.train()
+
+            # 学习率调度（基于测试损失）
+            scheduler.step(test_loss)
+            current_lr = optimizer.param_groups[0]['lr']
+
+            if (epoch + 1) % 50 == 0 or epoch == 0:
+                print(f'Epoch {epoch + 1:04d}/{cfg.max_epochs}, '
+                      f'Train MSE: {train_loss:.8f}, Test MSE: {test_loss:.8f}, LR: {current_lr:.2e}')
+
+            # 早停检查（基于测试损失）
+            if test_loss < best_test_loss:
+                best_test_loss = test_loss
+                best_state = {k: v.clone() for k, v in model.state_dict().items()}
+                patience_counter = 0
+            else:
+                patience_counter += 1
+
+            if patience_counter >= cfg.early_stop_patience:
+                print(f'验证损失不再下降，提前停止。epoch={epoch + 1}, best_test_mse={best_test_loss:.8f}')
                 break
+            if train_loss <= cfg.target_mse:
+                print(f'达到目标误差，提前停止。epoch={epoch + 1}, mse={train_loss:.8f}')
+                break
+
+        # 恢复最佳模型
+        if best_state is not None:
+            model.load_state_dict(best_state)
+            print(f'已恢复最佳验证损失模型 (Test MSE={best_test_loss:.8f})')
+
+    else:  # 'gd' — 标准 SGD + 动量 + 权重衰减
+        optimizer = torch.optim.SGD(model.parameters(), lr=cfg.learning_rate,
+                                     momentum=0.9, weight_decay=cfg.weight_decay)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode='min', factor=cfg.lr_factor,
+            patience=cfg.lr_patience, min_lr=1e-6
+        )
+
+        best_test_loss = float('inf')
+        best_state = None
+        patience_counter = 0
+
+        for epoch in range(cfg.max_epochs):
+            model.train()
+            pred = model(x_train_tensor)
+            loss = criterion(pred, y_train_tensor)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            train_loss = float(loss.item())
+
+            # 计算测试损失
+            model.eval()
+            with torch.no_grad():
+                test_pred_s = model(x_test_tensor)
+                test_loss = float(criterion(test_pred_s, y_test_tensor).item())
+            model.train()
+
+            # 学习率调度（基于测试损失）
+            scheduler.step(test_loss)
+            current_lr = optimizer.param_groups[0]['lr']
+
+            if (epoch + 1) % 50 == 0 or epoch == 0:
+                print(f'Epoch {epoch + 1:04d}/{cfg.max_epochs}, '
+                      f'Train MSE: {train_loss:.8f}, Test MSE: {test_loss:.8f}, LR: {current_lr:.2e}')
+
+            # 早停检查（基于测试损失）
+            if test_loss < best_test_loss:
+                best_test_loss = test_loss
+                best_state = {k: v.clone() for k, v in model.state_dict().items()}
+                patience_counter = 0
+            else:
+                patience_counter += 1
+
+            if patience_counter >= cfg.early_stop_patience:
+                print(f'验证损失不再下降，提前停止。epoch={epoch + 1}, best_test_mse={best_test_loss:.8f}')
+                break
+            if train_loss <= cfg.target_mse:
+                print(f'达到目标误差，提前停止。epoch={epoch + 1}, mse={train_loss:.8f}')
+                break
+
+        # 恢复最佳模型
+        if best_state is not None:
+            model.load_state_dict(best_state)
+            print(f'已恢复最佳验证损失模型 (Test MSE={best_test_loss:.8f})')
 
     # 6) 评估（总体 + 分输出）
     model.eval()
@@ -370,6 +540,16 @@ def main():
         f"MAPE: {test_metrics['mape']:.4f}%, MSE: {test_metrics['mse']:.8f}"
     )
 
+    # 过拟合检测
+    r2_gap = train_metrics['r2'] - test_metrics['r2']
+    if r2_gap > 0.3:
+        print(f'⚠ 警告: Train R² 与 Test R² 差距过大 ({r2_gap:.3f})，存在明显过拟合！')
+        print('  建议：减小 hidden_size、增大 weight_decay 或收集更多数据。')
+    elif r2_gap > 0.15:
+        print(f'⚡ 注意: Train R² 与 Test R² 有一定差距 ({r2_gap:.3f})，可能存在轻微过拟合。')
+    else:
+        print(f'✓ Train/Test R² 差距合理 ({r2_gap:.3f})，泛化能力良好。')
+
     print('\n========== 分输出评估(Test) ==========', flush=True)
     for i, name in enumerate(target_cols):
         metric_i = evaluate_regression(y_test_real[:, i], test_pred[:, i])
@@ -377,6 +557,25 @@ def main():
             f"{name} -> R2: {metric_i['r2']:.6f}, RMSE: {metric_i['rmse']:.6f}, "
             f"MAPE: {metric_i['mape']:.4f}%, MSE: {metric_i['mse']:.8f}"
         )
+
+    # 逐样本预测诊断（仅测试集，最多显示15条）
+    print('\n========== 测试集逐样本预测 ==========', flush=True)
+    n_show = min(len(y_test_real), 15)
+    header = 'Idx\t' + '\t'.join([f'{c}_真实' for c in target_cols]) + '\t' + \
+             '\t'.join([f'{c}_预测' for c in target_cols]) + '\t' + \
+             '\t'.join([f'{c}_误差%' for c in target_cols])
+    print(header)
+    for idx in range(n_show):
+        parts = [f'{idx}']
+        for i, name in enumerate(target_cols):
+            parts.append(f'{y_test_real[idx, i]:.4f}')
+        for i, name in enumerate(target_cols):
+            parts.append(f'{test_pred[idx, i]:.4f}')
+        for i, name in enumerate(target_cols):
+            err = abs(y_test_real[idx, i] - test_pred[idx, i])
+            denom = max(abs(y_test_real[idx, i]), 1e-8)
+            parts.append(f'{err/denom*100:.1f}')
+        print('\t'.join(parts))
 
     # 7) 保存模型、归一化器与配置
     model_path = OUTPUT_DIR / MODEL_FILE

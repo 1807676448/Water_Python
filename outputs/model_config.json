@@ -10,13 +10,13 @@
   ],
   "target_col": "cod",
   "input_size": 3,
-  "hidden_size": 8,
+  "hidden_size": 3,
   "output_size": 2,
   "activation_hidden": "tansig",
   "activation_output": "purelin",
   "normalization": "MinMaxScaler(-1,1)",
-  "train_algo": "gd",
+  "train_algo": "adam",
   "use_pso_init": true,
   "seed": 42,
-  "output_dir": "D:\\STM32\\Water_2\\Water_Python\\outputs"
+  "output_dir": "D:\\STM32\\Water_Python\\outputs"
 }
