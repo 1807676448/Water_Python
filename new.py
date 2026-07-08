@@ -31,11 +31,12 @@ MODEL_CONFIG_FILE = 'model_config.json'
 SEED = 42
 
 # 数据与训练主参数
-DEFAULT_EXCEL_FILE = 'shuizhi.xlsx'
+DEFAULT_EXCEL_FILE = 'collected_data.xlsx'
 DEFAULT_TEST_SIZE = 0.2
 DEFAULT_SCENARIO = 'custom'  # 'temperature_compensation' / 'turbidity_prediction' / 'custom'
-DEFAULT_INPUT_COLS = ('254', '550', 'tem')
-DEFAULT_TARGET_COLS = ('cod', 'uv254')
+# 输入列为串口采集的补偿光谱值 + 温度；目标列为实验室实测值
+DEFAULT_INPUT_COLS = ('comp_254', 'comp_550', 'Temp')
+DEFAULT_TARGET_COLS = ('COD_lab', 'UV254_lab')
 DEFAULT_HIDDEN_SIZE = 3          # 最小可行隐层（3→3→2=20参数），降低过拟合
 DEFAULT_LEARNING_RATE = 0.01     # 适当降低学习率，配合Adam自适应
 DEFAULT_MAX_EPOCHS = 10000
@@ -68,11 +69,19 @@ class Logger:
     def __init__(self, filename):
         self.terminal = sys.stdout
         self.log = open(filename, 'w', encoding='utf-8')
+        # 获取终端编码以处理 GBK 等窄编码终端
+        self.term_encoding = getattr(self.terminal, 'encoding', None) or 'utf-8'
 
     def write(self, message):
-        self.terminal.write(message)
+        # 文件用 UTF-8 完整保存
         self.log.write(message)
         self.log.flush()
+        # 终端用安全编码写入，无法表示的字符替换为 ?
+        try:
+            self.terminal.write(message)
+        except UnicodeEncodeError:
+            safe = message.encode(self.term_encoding, errors='replace').decode(self.term_encoding)
+            self.terminal.write(safe)
 
     def flush(self):
         self.terminal.flush()
@@ -289,14 +298,15 @@ def main():
     input_cols, target_cols, hidden_size = resolve_columns(df, cfg)
     output_size = len(target_cols)
 
-    # 输出数据统计，帮助理解数据质量
+    # 输出数据统计，帮助理解数据质量（仅数值列）
     print('\n--- 数据统计 ---')
-    for c in df.columns:
+    numeric_cols = df.select_dtypes(include='number').columns
+    for c in numeric_cols:
         col = df[c]
         print(f'{c}: mean={col.mean():.4f}, std={col.std():.4f}, '
               f'CV={abs(col.std()/col.mean()):.4f}, range=[{col.min():.4f}, {col.max():.4f}]')
     print('--- 相关系数(输入 vs 输出) ---')
-    corr = df.corr()
+    corr = df.corr(numeric_only=True)
     for ic in input_cols:
         for tc in target_cols:
             if ic in corr.index and tc in corr.columns:
@@ -311,7 +321,7 @@ def main():
     print(f'隐含层神经元: {hidden_size}')
     print(f'模型总参数: {n_params}，训练样本: {n_train}，参数/样本比: {n_params/n_train:.2f}')
     if n_params > n_train * 0.5:
-        print('⚠ 警告: 参数量相对样本数偏多，容易过拟合。建议减小 hidden_size 或增大 weight_decay。')
+        print('[警告] 参数量相对样本数偏多，容易过拟合。建议减小 hidden_size 或增大 weight_decay。')
 
     # 2) 划分训练/测试并做 MinMax 归一化
     x_raw = df[input_cols].values.astype(np.float32)
@@ -543,12 +553,12 @@ def main():
     # 过拟合检测
     r2_gap = train_metrics['r2'] - test_metrics['r2']
     if r2_gap > 0.3:
-        print(f'⚠ 警告: Train R² 与 Test R² 差距过大 ({r2_gap:.3f})，存在明显过拟合！')
+        print(f'[警告] Train R² 与 Test R² 差距过大 ({r2_gap:.3f})，存在明显过拟合！')
         print('  建议：减小 hidden_size、增大 weight_decay 或收集更多数据。')
     elif r2_gap > 0.15:
-        print(f'⚡ 注意: Train R² 与 Test R² 有一定差距 ({r2_gap:.3f})，可能存在轻微过拟合。')
+        print(f'[注意] Train R² 与 Test R² 有一定差距 ({r2_gap:.3f})，可能存在轻微过拟合。')
     else:
-        print(f'✓ Train/Test R² 差距合理 ({r2_gap:.3f})，泛化能力良好。')
+        print(f'[OK] Train/Test R² 差距合理 ({r2_gap:.3f})，泛化能力良好。')
 
     print('\n========== 分输出评估(Test) ==========', flush=True)
     for i, name in enumerate(target_cols):

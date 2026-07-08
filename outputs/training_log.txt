@@ -12,121 +12,90 @@ early_stop_patience=800：验证损失不降多少轮后停止
 
 日志系统已启动，输出将保存到 outputs/training_log.txt
 读取数据中...
-检测到列名: ['254', '550', 'tem', 'cod', 'uv254']
-数据量: 47 条记录
+检测到列名: ['timestamp', 'device_id', 'base_550', 'base_254', 'comp_550', 'comp_254', 'raw_550', 'raw_254', 'Temp', 'COD_lab', 'UV254_lab']
+数据量: 30 条记录
 
 --- 数据统计 ---
-254: mean=-0.6321, std=0.0622, CV=0.0984, range=[-0.7527, -0.5441]
-550: mean=0.9846, std=0.0029, CV=0.0030, range=[0.9797, 0.9909]
-tem: mean=34.1168, std=0.5101, CV=0.0150, range=[33.7500, 35.6125]
-cod: mean=7.4551, std=3.5293, CV=0.4734, range=[3.3600, 11.8800]
-uv254: mean=0.3025, std=0.2559, CV=0.8457, range=[0.0875, 0.9270]
+device_id: mean=1.0000, std=0.0000, CV=0.0000, range=[1.0000, 1.0000]
+base_550: mean=0.0018, std=0.0002, CV=0.0873, range=[0.0016, 0.0022]
+base_254: mean=-0.0063, std=0.0007, CV=0.1193, range=[-0.0084, -0.0053]
+comp_550: mean=0.9660, std=0.0029, CV=0.0030, range=[0.9609, 0.9715]
+comp_254: mean=0.4036, std=0.0013, CV=0.0032, range=[0.4005, 0.4061]
+raw_550: mean=0.9677, std=0.0029, CV=0.0030, range=[0.9629, 0.9733]
+raw_254: mean=0.3973, std=0.0011, CV=0.0028, range=[0.3941, 0.4001]
+Temp: mean=36.5675, std=0.9541, CV=0.0261, range=[33.6375, 37.2500]
+COD_lab: mean=8.8120, std=3.4167, CV=0.3877, range=[3.6600, 14.7900]
+UV254_lab: mean=0.2320, std=0.0906, CV=0.3906, range=[0.0954, 0.3904]
 --- 相关系数(输入 vs 输出) ---
-  corr(254, cod) = 0.6157
-  corr(254, uv254) = -0.1352
-  corr(550, cod) = 0.2545
-  corr(550, uv254) = -0.0851
-  corr(tem, cod) = 0.1210
-  corr(tem, uv254) = 0.0510
+  corr(comp_254, COD_lab) = 0.5370
+  corr(comp_254, UV254_lab) = 0.5371
+  corr(comp_550, COD_lab) = -0.0561
+  corr(comp_550, UV254_lab) = -0.0561
+  corr(Temp, COD_lab) = 0.7972
+  corr(Temp, UV254_lab) = 0.7973
 
-输入列: ['254', '550', 'tem']
-输出列: ['cod', 'uv254']
+输入列: ['comp_254', 'comp_550', 'Temp']
+输出列: ['COD_lab', 'UV254_lab']
 隐含层神经元: 3
-模型总参数: 20，训练样本: 37，参数/样本比: 0.54
-⚠ 警告: 参数量相对样本数偏多，容易过拟合。建议减小 hidden_size 或增大 weight_decay。
-训练集: 37 条，测试集: 10 条
+模型总参数: 20，训练样本: 24，参数/样本比: 0.83
+[警告] 参数量相对样本数偏多，容易过拟合。建议减小 hidden_size 或增大 weight_decay。
+训练集: 24 条，测试集: 6 条
 开始 PSO 初始化...
-[PSO] 初始全局最优 MSE: 0.51364714
-[PSO] Iter 010/100, gbest MSE: 0.44369259
-[PSO] Iter 020/100, gbest MSE: 0.40873325
-[PSO] Iter 030/100, gbest MSE: 0.39932293
-[PSO] Iter 040/100, gbest MSE: 0.39932293
-[PSO] Iter 050/100, gbest MSE: 0.37522054
-[PSO] Iter 060/100, gbest MSE: 0.37522054
-[PSO] Iter 070/100, gbest MSE: 0.36076480
-[PSO] Iter 080/100, gbest MSE: 0.35675898
-[PSO] Iter 090/100, gbest MSE: 0.34513572
-[PSO] Iter 100/100, gbest MSE: 0.34118852
-[PSO] 完成，使用最优参数初始化 BP 网络，MSE: 0.34118852
+[PSO] 初始全局最优 MSE: 0.44409212
+[PSO] Iter 010/100, gbest MSE: 0.25204644
+[PSO] Iter 020/100, gbest MSE: 0.25204644
+[PSO] Iter 030/100, gbest MSE: 0.21426606
+[PSO] Iter 040/100, gbest MSE: 0.21426606
+[PSO] Iter 050/100, gbest MSE: 0.20125146
+[PSO] Iter 060/100, gbest MSE: 0.18368419
+[PSO] Iter 070/100, gbest MSE: 0.13798273
+[PSO] Iter 080/100, gbest MSE: 0.09364834
+[PSO] Iter 090/100, gbest MSE: 0.06530979
+[PSO] Iter 100/100, gbest MSE: 0.04920459
+[PSO] 完成，使用最优参数初始化 BP 网络，MSE: 0.04920459
 开始 BP 训练...
-Epoch 0001/10000, Train MSE: 0.34118852, Test MSE: 0.37222546, LR: 1.00e-02
-Epoch 0050/10000, Train MSE: 0.33710623, Test MSE: 0.39079264, LR: 1.00e-02
-Epoch 0100/10000, Train MSE: 0.33399430, Test MSE: 0.38949472, LR: 1.00e-02
-Epoch 0150/10000, Train MSE: 0.32890254, Test MSE: 0.38672259, LR: 1.00e-02
-Epoch 0200/10000, Train MSE: 0.32332882, Test MSE: 0.38740775, LR: 1.00e-02
-Epoch 0250/10000, Train MSE: 0.30724841, Test MSE: 0.37262446, LR: 1.00e-02
-Epoch 0300/10000, Train MSE: 0.22571324, Test MSE: 0.27580172, LR: 1.00e-02
-Epoch 0350/10000, Train MSE: 0.19048910, Test MSE: 0.24187997, LR: 1.00e-02
-Epoch 0400/10000, Train MSE: 0.18943293, Test MSE: 0.23658898, LR: 1.00e-02
-Epoch 0450/10000, Train MSE: 0.18976505, Test MSE: 0.23006658, LR: 1.00e-02
-Epoch 0500/10000, Train MSE: 0.19039522, Test MSE: 0.22710924, LR: 1.00e-02
-Epoch 0550/10000, Train MSE: 0.19074118, Test MSE: 0.22482872, LR: 1.00e-02
-Epoch 0600/10000, Train MSE: 0.19097483, Test MSE: 0.22305162, LR: 1.00e-02
-Epoch 0650/10000, Train MSE: 0.19113640, Test MSE: 0.22165859, LR: 1.00e-02
-Epoch 0700/10000, Train MSE: 0.19125129, Test MSE: 0.22056839, LR: 1.00e-02
-Epoch 0750/10000, Train MSE: 0.19133413, Test MSE: 0.21972227, LR: 1.00e-02
-Epoch 0800/10000, Train MSE: 0.19139422, Test MSE: 0.21907303, LR: 1.00e-02
-Epoch 0850/10000, Train MSE: 0.19143787, Test MSE: 0.21858256, LR: 1.00e-02
-Epoch 0900/10000, Train MSE: 0.19146934, Test MSE: 0.21821690, LR: 1.00e-02
-Epoch 0950/10000, Train MSE: 0.19150849, Test MSE: 0.21773510, LR: 1.00e-02
-Epoch 1000/10000, Train MSE: 0.19150782, Test MSE: 0.21775541, LR: 1.00e-02
-Epoch 1050/10000, Train MSE: 0.19151917, Test MSE: 0.21762049, LR: 1.00e-02
-Epoch 1100/10000, Train MSE: 0.19153529, Test MSE: 0.21754901, LR: 1.00e-02
-Epoch 1150/10000, Train MSE: 0.19153269, Test MSE: 0.21745460, LR: 1.00e-02
-Epoch 1200/10000, Train MSE: 0.19153579, Test MSE: 0.21741645, LR: 1.00e-02
-Epoch 1250/10000, Train MSE: 0.19153813, Test MSE: 0.21739765, LR: 1.00e-02
-Epoch 1300/10000, Train MSE: 0.19154046, Test MSE: 0.21737650, LR: 1.00e-02
-Epoch 1350/10000, Train MSE: 0.19154076, Test MSE: 0.21734755, LR: 1.00e-02
-Epoch 1400/10000, Train MSE: 0.19154108, Test MSE: 0.21734858, LR: 1.00e-02
-Epoch 1450/10000, Train MSE: 0.19157341, Test MSE: 0.21777470, LR: 1.00e-02
-Epoch 1500/10000, Train MSE: 0.19154316, Test MSE: 0.21735647, LR: 1.00e-02
-Epoch 1550/10000, Train MSE: 0.19154219, Test MSE: 0.21733296, LR: 1.00e-02
-Epoch 1600/10000, Train MSE: 0.19154195, Test MSE: 0.21733820, LR: 1.00e-02
-Epoch 1650/10000, Train MSE: 0.19155097, Test MSE: 0.21758232, LR: 1.00e-02
-Epoch 1700/10000, Train MSE: 0.19154328, Test MSE: 0.21736214, LR: 1.00e-02
-Epoch 1750/10000, Train MSE: 0.19154257, Test MSE: 0.21733077, LR: 1.00e-02
-Epoch 1800/10000, Train MSE: 0.19154210, Test MSE: 0.21733510, LR: 1.00e-02
-Epoch 1850/10000, Train MSE: 0.19154184, Test MSE: 0.21733944, LR: 1.00e-02
-Epoch 1900/10000, Train MSE: 0.19155246, Test MSE: 0.21713790, LR: 1.00e-02
-Epoch 1950/10000, Train MSE: 0.19154337, Test MSE: 0.21730192, LR: 1.00e-02
-Epoch 2000/10000, Train MSE: 0.19154260, Test MSE: 0.21732983, LR: 1.00e-02
-Epoch 2050/10000, Train MSE: 0.19154210, Test MSE: 0.21733561, LR: 1.00e-02
-Epoch 2100/10000, Train MSE: 0.19154182, Test MSE: 0.21733931, LR: 1.00e-02
-Epoch 2150/10000, Train MSE: 0.19156870, Test MSE: 0.21779063, LR: 1.00e-02
-Epoch 2200/10000, Train MSE: 0.19154322, Test MSE: 0.21732119, LR: 5.00e-03
-Epoch 2250/10000, Train MSE: 0.19154307, Test MSE: 0.21732232, LR: 5.00e-03
-Epoch 2300/10000, Train MSE: 0.19154266, Test MSE: 0.21732798, LR: 5.00e-03
-Epoch 2350/10000, Train MSE: 0.19154237, Test MSE: 0.21733196, LR: 5.00e-03
-Epoch 2400/10000, Train MSE: 0.19154213, Test MSE: 0.21733506, LR: 5.00e-03
-Epoch 2450/10000, Train MSE: 0.19154193, Test MSE: 0.21733744, LR: 5.00e-03
-Epoch 2500/10000, Train MSE: 0.19154184, Test MSE: 0.21733899, LR: 2.50e-03
-Epoch 2550/10000, Train MSE: 0.19154175, Test MSE: 0.21733961, LR: 2.50e-03
-Epoch 2600/10000, Train MSE: 0.19154173, Test MSE: 0.21734031, LR: 2.50e-03
-Epoch 2650/10000, Train MSE: 0.19154167, Test MSE: 0.21734083, LR: 2.50e-03
-验证损失不再下降，提前停止。epoch=2683, best_test_mse=0.21682246
-已恢复最佳验证损失模型 (Test MSE=0.21682246)
+Epoch 0001/10000, Train MSE: 0.04920459, Test MSE: 0.04257449, LR: 1.00e-02
+Epoch 0050/10000, Train MSE: 0.03927306, Test MSE: 0.03291738, LR: 1.00e-02
+Epoch 0100/10000, Train MSE: 0.03841491, Test MSE: 0.03108334, LR: 1.00e-02
+Epoch 0150/10000, Train MSE: 0.03816720, Test MSE: 0.02973183, LR: 1.00e-02
+Epoch 0200/10000, Train MSE: 0.03567607, Test MSE: 0.02610442, LR: 1.00e-02
+Epoch 0250/10000, Train MSE: 0.03385165, Test MSE: 0.02382127, LR: 1.00e-02
+Epoch 0300/10000, Train MSE: 0.03363256, Test MSE: 0.02366724, LR: 1.00e-02
+Epoch 0350/10000, Train MSE: 0.03370501, Test MSE: 0.02378150, LR: 1.00e-02
+Epoch 0400/10000, Train MSE: 0.03376134, Test MSE: 0.02385577, LR: 1.00e-02
+Epoch 0450/10000, Train MSE: 0.03379789, Test MSE: 0.02391258, LR: 1.00e-02
+Epoch 0500/10000, Train MSE: 0.03382292, Test MSE: 0.02395994, LR: 1.00e-02
+Epoch 0550/10000, Train MSE: 0.03384189, Test MSE: 0.02400032, LR: 1.00e-02
+Epoch 0600/10000, Train MSE: 0.03385382, Test MSE: 0.02402670, LR: 5.00e-03
+Epoch 0650/10000, Train MSE: 0.03386060, Test MSE: 0.02404245, LR: 5.00e-03
+Epoch 0700/10000, Train MSE: 0.03386675, Test MSE: 0.02405705, LR: 5.00e-03
+Epoch 0750/10000, Train MSE: 0.03387240, Test MSE: 0.02407069, LR: 5.00e-03
+Epoch 0800/10000, Train MSE: 0.03387760, Test MSE: 0.02408347, LR: 5.00e-03
+Epoch 0850/10000, Train MSE: 0.03388235, Test MSE: 0.02409530, LR: 5.00e-03
+Epoch 0900/10000, Train MSE: 0.03388580, Test MSE: 0.02410386, LR: 2.50e-03
+Epoch 0950/10000, Train MSE: 0.03388793, Test MSE: 0.02410925, LR: 2.50e-03
+Epoch 1000/10000, Train MSE: 0.03388998, Test MSE: 0.02411447, LR: 2.50e-03
+Epoch 1050/10000, Train MSE: 0.03389198, Test MSE: 0.02411965, LR: 2.50e-03
+验证损失不再下降，提前停止。epoch=1078, best_test_mse=0.02362380
+已恢复最佳验证损失模型 (Test MSE=0.02362380)
 
 ========== 模型总体评估 ==========
-Train -> R2: 0.662495, RMSE: 1.690036, MAPE: 41.1171%, MSE: 2.85622001
-Test  -> R2: 0.541653, RMSE: 1.662174, MAPE: 27.4333%, MSE: 2.76282096
-✓ Train/Test R² 差距合理 (0.121)，泛化能力良好。
+Train -> R2: 0.913778, RMSE: 0.718347, MAPE: 9.7337%, MSE: 0.51602280
+Test  -> R2: 0.900624, RMSE: 0.606241, MAPE: 8.0192%, MSE: 0.36752760
+[OK] Train/Test R² 差距合理 (0.013)，泛化能力良好。
 
 ========== 分输出评估(Test) ==========
-cod -> R2: 0.411454, RMSE: 2.345775, MAPE: 19.0384%, MSE: 5.50266171
-uv254 -> R2: 0.671852, RMSE: 0.151592, MAPE: 35.8283%, MSE: 0.02298010
+COD_lab -> R2: 0.900163, RMSE: 0.857055, MAPE: 8.0945%, MSE: 0.73454332
+UV254_lab -> R2: 0.901086, RMSE: 0.022625, MAPE: 7.9439%, MSE: 0.00051191
 
 ========== 测试集逐样本预测 ==========
-Idx	cod_真实	uv254_真实	cod_预测	uv254_预测	cod_误差%	uv254_误差%
-0	10.9200	0.2879	7.5649	0.1489	30.7	48.3
-1	3.5600	0.9270	3.8057	0.7197	6.9	22.4
-2	10.9200	0.2879	8.1283	0.1591	25.6	44.7
-3	11.8800	0.3132	11.5257	0.2664	3.0	14.9
-4	10.9200	0.2879	7.1444	0.1529	34.6	46.9
-5	3.5600	0.9270	4.4435	0.6223	24.8	32.9
-6	11.2300	0.2961	7.8738	0.1955	29.9	34.0
-7	6.5100	0.1710	6.0691	0.2785	6.8	62.8
-8	9.3200	0.2454	9.3423	0.2259	0.2	7.9
-9	10.9200	0.2879	7.8711	0.1629	27.9	43.4
+Idx	COD_lab_真实	UV254_lab_真实	COD_lab_预测	UV254_lab_预测	COD_lab_误差%	UV254_lab_误差%
+0	13.8900	0.3667	12.6280	0.3323	9.1	9.4
+1	8.8500	0.2329	9.7271	0.2577	9.9	10.6
+2	12.0100	0.3168	11.0374	0.2934	8.1	7.4
+3	9.8100	0.2585	10.4497	0.2760	6.5	6.8
+4	6.1000	0.1600	5.8958	0.1560	3.3	2.5
+5	6.9400	0.1825	7.7454	0.2026	11.6	11.0
 
 保存完成:
 - D:\STM32\Water_Python\outputs\water_quality_model.pth

@@ -1,14 +1,14 @@
 {
   "input_cols": [
-    "254",
-    "550",
-    "tem"
+    "comp_254",
+    "comp_550",
+    "Temp"
   ],
   "target_cols": [
-    "cod",
-    "uv254"
+    "COD_lab",
+    "UV254_lab"
   ],
-  "target_col": "cod",
+  "target_col": "COD_lab",
   "input_size": 3,
   "hidden_size": 3,
   "output_size": 2,
